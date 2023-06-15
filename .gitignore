@@ -1,9 +1,8 @@
-__pycache__/
+.env
 .ipynb_checkpoints/
-.local/configuration/*.toml
-.local/configuration/environment
 .local/environments/
 .local/installations/
 .local/state/
 .local/utilities/
+__pycache__/
 data-sources/websites/

@@ -1,12 +1,15 @@
 beautifulsoup4
 chromadb
+dotenv
 faiss-cpu
 langchain
 notebook
 openai
 panel
+platformdirs
 pytesseract
 scrapy
 tiktoken
 tomli
+tomli-w
 unstructured

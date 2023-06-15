@@ -30,12 +30,14 @@ def prepare( ):
     project_path = Path( __file__ ).parent.resolve( strict = True )
     library_path = project_path / 'sources'
     module_search_paths.insert( 0, str( library_path ) )
-    from chatter.gui import prepare as prepare_gui
-    configuration = provide_configuration( project_path )
-    prepare_environment( project_path )
+    from platformdirs import PlatformDirs
+    directories = PlatformDirs( 'llm-chatter', 'emcd', ensure_exists = True )
+    configuration = provide_configuration( project_path, directories )
+    prepare_environment( configuration, directories, project_path )
     prepare_api_clients( )
-    vectorstores = prepare_vectorstores( configuration )
-    gui = prepare_gui( vectorstores )
+    vectorstores = prepare_vectorstores( configuration, directories )
+    from chatter.gui import prepare as prepare_gui
+    gui = prepare_gui( configuration, directories, vectorstores )
     return configuration, gui
 
 
@@ -48,30 +50,35 @@ def prepare_api_clients( ):
             openai.organization = cpe[ 'OPENAI_ORGANIZATION_ID' ]
 
 
-def prepare_environment( project_path ):
-    path = project_path / '.local/configuration/environment'
+def prepare_environment( configuration, directories, project_path ):
+    from pathlib import Path
+    path = Path( configuration[ 'locations' ][ 'environment-file' ].format(
+        user_configuration_path = directories.user_config_path,
+        project_path = project_path ) )
     if not path.exists( ): return
     from dotenv import load_dotenv
     with path.open( ) as environment_file:
         load_dotenv( stream = environment_file )
 
 
-def prepare_vectorstores( configuration ):
+def prepare_vectorstores( configuration, directories ):
     from pathlib import Path
     from pickle import load as unpickle
     from tomli import load as load_toml
-    state_path = Path( configuration[ 'locations' ][ 'state' ] )
-    registry_path = state_path / 'vectorstores.toml'
+    registry_path = directories.user_config_path / 'vectorstores.toml'
+    data_path = Path( configuration[ 'locations' ][ 'data' ] ) / 'vectorstores'
+    stores = { }
+    if not registry_path.exists( ): return stores
     with registry_path.open( 'rb' ) as registry_file:
         registry = load_toml( registry_file )
-    stores = { }
     for data in registry[ 'stores' ]:
         name = data[ 'name' ]
         stores[ name ] = data.copy( )
         provider = data[ 'provider' ]
         if provider.startswith( 'file:' ):
             format_ = data[ 'format' ]
-            location = Path( data[ 'location' ] )
+            location = Path( data[ 'location' ].format(
+                data_path = data_path ) )
             if 'python-pickle' == format_:
                 with location.open( 'rb' ) as store_file:
                     stores[ name ][ 'instance' ] = unpickle( store_file )
@@ -80,15 +87,15 @@ def prepare_vectorstores( configuration ):
     return stores
 
 
-def provide_configuration( project_path ):
+def provide_configuration( project_path, directories ):
     from shutil import copyfile
     from tomli import load
-    path = project_path / '.local/configuration/general.toml'
-    if not path.exists( ):
+    configuration_path = directories.user_config_path / 'general.toml'
+    if not configuration_path.exists( ):
         copyfile(
             str( project_path / '.local/data/configuration/general.toml' ),
-            str( path ) )
-    with path.open( 'rb' ) as file: return load( file )
+            str( configuration_path ) )
+    with configuration_path.open( 'rb' ) as file: return load( file )
 
 
 if __name__ == "__main__": main( )

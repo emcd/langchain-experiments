@@ -18,25 +18,42 @@
 #============================================================================#
 
 
-''' GUI with Panel widgets. '''
+''' Assorted data structures to help with GUI development. '''
 
 
-def prepare( configuration, directories, vectorstores ):
-    from types import SimpleNamespace
-    from .callbacks import (
-        generate_component,
-        populate_dashboard,
-        register_dashboard_callbacks,
+from panel.reactive import ReactiveHTML
+import param
+
+
+class ConversationIndicator( ReactiveHTML ):
+
+    content = param.String( default = None )
+    identity = param.String( default = None )
+    selected = param.Event( default = False )
+
+    _template = (
+        '''<div id="ConversationIndicator" onclick="${_div_click}">'''
+        '''${content}</div>''' )
+
+    def __init__( self, content, identity, **params ):
+        self.content = content
+        self.identity = identity
+        super( ).__init__( **params )
+
+    def _div_click( self, event ):
+        self.selected = not self.selected
+        print( f"DEBUG: selected = {self.selected}" )
+
+
+def _provide_auxiliary_classes( ):
+    from collections import namedtuple
+    return (
+        namedtuple( 'ConversationTuple', ( 'text_title', ) ),
+        namedtuple(
+            'MessageTuple',
+            ( 'checkbox_inclusion', 'text_message', ) ),
     )
-    from .layouts import dashboard_layout as layout
-    components = { }
-    generate_component( components, layout, 'dashboard' )
-    gui = SimpleNamespace( **components )
-    gui.auxiliary_data__ = {
-        'configuration': configuration,
-        'directories': directories,
-        'vectorstores': vectorstores,
-    }
-    populate_dashboard( gui )
-    register_dashboard_callbacks( gui )
-    return gui
+
+(   ConversationTuple,
+    MessageTuple,
+) = _provide_auxiliary_classes( )

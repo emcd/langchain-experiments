@@ -34,22 +34,15 @@ from panel.widgets import (
     TextInput,
 )
 
-
-layout = {
+dashboard_layout = {
     'dashboard': dict(
         component_class = Row,
         contains = [
-            'left_pane',
-            'left_spacer',
-            'center_pane',
-            'right_spacer',
-            'right_pane',
+            'column_conversations_manager',
+            'conversation_panes',
         ]
     ),
-}
-
-layout.update( {
-    'left_pane': dict(
+    'column_conversations_manager': dict(
         component_class = Column,
         component_arguments = dict( width = 640 ),
         contains = [
@@ -65,11 +58,27 @@ layout.update( {
         ),
     ),
     'column_conversations_index': dict( component_class = Column ),
-    'left_spacer': dict( component_class = HSpacer ),
-} )
+    'conversation_panes': dict(
+        component_class = Column,
+        component_arguments = dict( width_policy = 'max' ),
+    ),
+}
 
-layout.update( {
-    'center_pane': dict(
+conversation_layout = {
+    'conversation_pane': dict(
+        component_class = Row,
+        contains = [
+            #'left_spacer',
+            'column_conversation',
+            'right_spacer',
+            'column_conversation_control',
+        ]
+    ),
+}
+
+conversation_layout.update( {
+    #'left_spacer': dict( component_class = HSpacer ),
+    'column_conversation': dict(
         component_class = Column,
         component_arguments = dict(
             sizing_mode = 'stretch_height', width = 1024,
@@ -225,9 +234,9 @@ layout.update( {
     ),
 } )
 
-layout.update( {
+conversation_layout.update( {
     'right_spacer': dict( component_class = HSpacer ),
-    'right_pane': dict(
+    'column_conversation_control': dict(
         component_class = Column,
         contains = [
             'selector_provider',
